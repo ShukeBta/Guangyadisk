@@ -24,7 +24,7 @@ class ShukGuangYaDisk(_PluginBase):
     # 插件图标 - 使用内建默认图标
     plugin_icon = ""
     # 插件版本
-    plugin_version = "2.0.0"
+    plugin_version = "2.0.1"
     # 插件作者
     plugin_author = "ShukeBta"
     # 作者主页

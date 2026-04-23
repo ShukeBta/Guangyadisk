@@ -17,6 +17,7 @@ from app.schemas.types import ChainEventType
 
 from .guangya_api import GuangYaApi
 from .guangya_client import GuangYaClient
+from .webdav_provider import GuangyaWebDAVProvider
 
 
 class ShukGuangYaDisk(_PluginBase):
@@ -27,7 +28,7 @@ class ShukGuangYaDisk(_PluginBase):
     # 插件图标 - 使用内建默认图标
     plugin_icon = "Guangyadisk_A.png"
     # 插件版本
-    plugin_version = "2.1.0"
+    plugin_version = "2.2.0"
     # 插件作者
     plugin_author = "ShukeBta"
     # 作者主页
@@ -271,6 +272,13 @@ class ShukGuangYaDisk(_PluginBase):
                 "auth": "bear",
                 "methods": ["GET"],
                 "summary": "浏览网盘目录（返回 JSON 目录结构）",
+            },
+            {
+                "path": "/webdav",
+                "endpoint": self.webdav,
+                "auth": "bear",
+                "methods": ["OPTIONS", "PROPFIND", "GET", "HEAD", "MKCOL", "DELETE", "PUT", "MOVE", "COPY"],
+                "summary": "WebDAV 服务端（Emby/Jellyfin 可通过 WebDAV 挂载光鸭云盘为媒体库）",
             },
         ]
 
@@ -1121,6 +1129,40 @@ class ShukGuangYaDisk(_PluginBase):
         except Exception as err:
             logger.error(f"【Shuk-光鸭云盘】浏览目录失败: {err}")
             return {"error": str(err), "items": []}
+
+    def webdav(self, request: Request, path: str = "") -> Response:
+        """
+        WebDAV 协议端点 — 供 Emby / Jellyfin 等媒体服务器直接挂载光鸭云盘为媒体库。
+        
+        用法:
+          - Emby 添加媒体库时选择"网络路径"，填入:
+            http://moviepilot-v2:3001/plugin/shuk-guangyadisk/webdav/BMH
+          - 或在浏览器中测试: 
+            http://你的IP:3001/plugin/shuk-guangyadisk/webdav/
+        
+        支持的 WebDAV 方法:
+          - PROPFIND: 列目录/获取属性（Emby 扫描媒体库核心方法）
+          - GET/HEAD: 流式播放文件
+          - MKCOL:    创建目录
+          - DELETE:   删除
+          - PUT:      上传
+          - MOVE/COPY: 移动/复制
+        
+        认证方式: Bearer Token（与 MoviePilot 插件认证一致）
+        """
+        if not self._enabled or not self._client or not self._guangya_api:
+            return Response(
+                content='{"error": "插件未启用或未登录"}',
+                status_code=503,
+                media_type="application/json",
+            )
+
+        # 创建 WebDAV Provider 并分发请求
+        provider = GuangyaWebDAVProvider(
+            guangya_api=self._guangya_api,
+            client=self._client,
+        )
+        return provider.handle_request(request, path or "/")
 
     def stop_service(self):
         """

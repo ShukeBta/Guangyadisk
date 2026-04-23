@@ -22,9 +22,9 @@ class ShukGuangYaDisk(_PluginBase):
     # 插件描述
     plugin_desc = "将光鸭云盘挂载为 MoviePilot / Emby 存储介质，支持扫码登录、文件浏览、上传下载、Emby 媒体库直连。"
     # 插件图标 - 使用内建默认图标
-    plugin_icon = ""
+    plugin_icon = "Guangyadisk_A.png"
     # 插件版本
-    plugin_version = "2.0.1"
+    plugin_version = "2.0.2"
     # 插件作者
     plugin_author = "ShukeBta"
     # 作者主页

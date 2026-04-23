@@ -1,0 +1,17 @@
+{
+  "version": 2,
+  "sessions": {
+    "125e0f59604441168ae5dc64aa1b9dc7": [
+      {
+        "expertId": "SeniorDeveloper",
+        "name": "吴八哥",
+        "profession": "高级开发工程师",
+        "avatarUrl": "https://acc-1258344699.cos.accelerate.myqcloud.com/workbuddy/experts/avatars/02-Engineering/SeniorDeveloper/SeniorDeveloper.png",
+        "promptUrl": "https://acc-1258344699.cos.accelerate.myqcloud.com/workbuddy/experts/experts/02-Engineering/SeniorDeveloper/SeniorDeveloper_zh.md",
+        "usedAt": 1776934061600,
+        "industryId": "12-GameDevelopment"
+      }
+    ]
+  },
+  "lastUpdated": 1776949367405
+}

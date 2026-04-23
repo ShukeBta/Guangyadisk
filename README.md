@@ -5,7 +5,7 @@
 **MoviePilot / Emby 光鸭云盘存储插件**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-2.0.1-green.svg)](https://github.com/ShukeBta/Guangyadisk/releases)
+[![Version](https://img.shields.io/badge/version-2.0.2-green.svg)](https://github.com/ShukeBta/Guangyadisk/releases)
 [![MoviePilot](https://img.shields.io/badge/MoviePilot-V2-orange.svg)](https://github.com/jxxghp/MoviePilot)
 
 </div>

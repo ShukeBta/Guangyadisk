@@ -413,7 +413,7 @@ import { _ as _export_sfc } from './_plugin-vue_export-helper-c4c0bc37.js';
   font-size: 12px !important;
 }
 
-/* 加载/空状态 */
+/* 加载/空状态 - 可点击刷新 */
 .gy-qrcode-placeholder[data-v-2ed562d3]:not(.gy-qrcode-placeholder--success) {
   display: flex !important;
   flex-direction: column !important;
@@ -421,6 +421,15 @@ import { _ as _export_sfc } from './_plugin-vue_export-helper-c4c0bc37.js';
   justify-content: center !important;
   gap: 10px !important;
   padding: 36px !important;
+  cursor: pointer !important;
+  transition: all 0.25s ease !important;
+  border-radius: 14px !important;
+}
+.gy-qrcode-placeholder[data-v-2ed562d3]:not(.gy-qrcode-placeholder--success):hover {
+  background: rgba(13, 148, 136, 0.06) !important;
+}
+.gy-qrcode-placeholder[data-v-2ed562d3]:not(.gy-qrcode-placeholder--success):active {
+  transform: scale(0.97);
 }
 
 /* 二维码元信息 - 改为紧凑的横向信息块 */
@@ -4098,6 +4107,8 @@ function startQrCountdown() {
       return
     }
     stopQrCountdown();
+    // 过期后立即清空旧二维码图片，显示"已过期"状态
+    resetQrDisplayState();
     if (!status.logged_in && !qrLoading.value) {
       fetchQrCode({ showSuccessMessage: false });
     }
@@ -4533,16 +4544,25 @@ return (_ctx, _cache) => {
                       ? (_openBlock(), _createElementBlock("img", {
                           key: 1,
                           src: qrCodeSrc.value,
-                          alt: "光鸭云盘登录二维码",
-                          class: _normalizeClass(['gy-qrcode-image', { 'gy-qrcode-image--dark': isDarkMode.value }])
+                          alt: "光鸭云盘登录二维码 - 点击刷新",
+                          class: _normalizeClass(['gy-qrcode-image', { 'gy-qrcode-image--dark': isDarkMode.value }]),
+                          onClick: _cache[0] || (_cache[0] = $event => (fetchQrCode())),
+                          style: "cursor:pointer"
                         }, null, 10, _hoisted_43))
-                      : (_openBlock(), _createElementBlock("div", _hoisted_44, [
+                      : (_openBlock(), _createElementBlock("div", {
+                          ..._hoisted_44,
+                          onClick: _cache[1] || (_cache[1] = $event => (fetchQrCode())),
+                          style: "cursor:pointer"
+                        }, [
                           _createVNode(_component_v_icon, {
-                            icon: "mdi-qrcode",
+                            icon: qrLoading.value || qrRendering.value ? 'mdi-loading mdi-spin' : 'mdi-refresh-circle',
                             size: "72",
-                            color: "grey"
+                            color: qrCountdown.value <= 0 && !qrLoading.value ? 'warning' : 'grey'
                           }),
-                          _createElementVNode("div", _hoisted_45, _toDisplayString(qrLoading.value || qrRendering.value ? '正在准备二维码...' : '二维码加载中...'), 1)
+                          _createElementVNode("div", _hoisted_45, _toDisplayString(
+                            qrLoading.value || qrRendering.value ? '正在准备二维码...' :
+                            (qrCountdown.value <= 0 ? '二维码已过期，点击刷新' : '点击获取二维码')
+                          ), 1)
                         ]))
                 ]),
                 (shouldShowQrMeta.value && !qrRendering.value)

@@ -405,7 +405,7 @@
   font-size: 12px !important;
 }
 
-/* 加载/空状态 */
+/* 加载/空状态 - 可点击刷新 */
 .gy-qrcode-placeholder[data-v-2ed562d3]:not(.gy-qrcode-placeholder--success) {
   display: flex !important;
   flex-direction: column !important;
@@ -413,6 +413,15 @@
   justify-content: center !important;
   gap: 10px !important;
   padding: 36px !important;
+  cursor: pointer !important;
+  transition: all 0.25s ease !important;
+  border-radius: 14px !important;
+}
+.gy-qrcode-placeholder[data-v-2ed562d3]:not(.gy-qrcode-placeholder--success):hover {
+  background: rgba(13, 148, 136, 0.06) !important;
+}
+.gy-qrcode-placeholder[data-v-2ed562d3]:not(.gy-qrcode-placeholder--success):active {
+  transform: scale(0.97);
 }
 
 /* 二维码元信息 - 改为紧凑的横向信息块 */

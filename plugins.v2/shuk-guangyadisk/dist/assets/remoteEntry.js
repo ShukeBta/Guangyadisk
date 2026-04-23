@@ -60,10 +60,10 @@ const currentImports = {};
       const exportSet = new Set(['Module', '__esModule', 'default', '_export_sfc']);
       let moduleMap = {
 "./Page":()=>{
-      dynamicLoadingCss(["Page-gy-v200.css"], false, './Page');
+      dynamicLoadingCss(["Page-76c96a1e.css"], false, './Page');
       return __federation_import('./__federation_expose_Page-3595592a.js').then(module =>Object.keys(module).every(item => exportSet.has(item)) ? () => module.default : () => module)},
-"./Config":()=>{
-      dynamicLoadingCss(["Config-gy-v200.css"], false, './Config');
+"./Config":(){
+      dynamicLoadingCss(["Config-24f22a04.css"], false, './Config');
       return __federation_import('./__federation_expose_Config-dd5dc9d2.js').then(module =>Object.keys(module).every(item => exportSet.has(item)) ? () => module.default : () => module)},};
       const seen = {};
       const dynamicLoadingCss = (cssFilePaths, dontAppendStylesToHead, exposeItemName) => {
@@ -105,7 +105,7 @@ const currentImports = {};
          }
          
           if (dontAppendStylesToHead) {
-            const key = 'css__ShukGuangYaDisk__' + exposeItemName;
+            const key = 'css__GuangYaDisk__' + exposeItemName;
             window[key] = window[key] || [];
             window[key].push(href);
             return;

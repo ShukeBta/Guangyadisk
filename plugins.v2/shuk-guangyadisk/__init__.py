@@ -4,6 +4,9 @@ import os
 import time
 import uuid
 
+from fastapi import Request, Response
+from fastapi.responses import StreamingResponse
+
 from app import schemas
 from app.core.event import Event, eventmanager
 from app.helper.storage import StorageHelper
@@ -24,7 +27,7 @@ class ShukGuangYaDisk(_PluginBase):
     # 插件图标 - 使用内建默认图标
     plugin_icon = "Guangyadisk_A.png"
     # 插件版本
-    plugin_version = "2.0.3"
+    plugin_version = "2.1.0"
     # 插件作者
     plugin_author = "ShukeBta"
     # 作者主页
@@ -254,6 +257,20 @@ class ShukGuangYaDisk(_PluginBase):
                 "auth": "bear",
                 "methods": ["POST"],
                 "summary": "退出登录",
+            },
+            {
+                "path": "/stream",
+                "endpoint": self.stream_file,
+                "auth": "bear",
+                "methods": ["GET"],
+                "summary": "流式代理网盘文件（供 Emby/播放器直连）",
+            },
+            {
+                "path": "/browse",
+                "endpoint": self.browse_path,
+                "auth": "bear",
+                "methods": ["GET"],
+                "summary": "浏览网盘目录（返回 JSON 目录结构）",
             },
         ]
 
@@ -887,6 +904,223 @@ class ShukGuangYaDisk(_PluginBase):
             }
         )
         return {"success": True, "message": "已退出登录"}
+
+    def stream_file(self, request: Request, path: str = "") -> Response:
+        """
+        流式代理网盘文件，供 Emby / Jellyfin 等媒体服务器直连播放。
+        
+        用法: GET /plugin/shuk-guangyadisk/stream?path=/BMH/电影/xxx.mkv
+        
+        原理:
+        1. 通过路径获取文件 item
+        2. 调用光鸭 API 获取签名下载 URL (signedURL)
+        3. 流式转发文件内容给客户端（支持 Range 请求/断点续传）
+        """
+        import requests as http_requests
+
+        if not self._enabled or not self._client or not self._guangya_api:
+            return Response(
+                content='{"error": "插件未启用或未登录"}',
+                status_code=503,
+                media_type="application/json",
+            )
+
+        # 规范化路径
+        normalized_path = str(path).replace("\\", "/").strip()
+        if not normalized_path.startswith("/"):
+            normalized_path = f"/{normalized_path}"
+        normalized_path = normalized_path.rstrip("/") or "/"
+        if normalized_path == "/":
+            return Response(
+                content='{"error": "必须指定文件路径"}',
+                status_code=400,
+                media_type="application/json",
+            )
+
+        try:
+            # 1. 通过路径获取文件 item
+            file_item = self._guangya_api.get_item(Path(normalized_path))
+            if not file_item:
+                return Response(
+                    content=f'{{"error": "文件不存在: {normalized_path}"}}',
+                    status_code=404,
+                    media_type="application/json",
+                )
+            if file_item.type != "file":
+                return Response(
+                    content=f'{{"error": "不是文件: {normalized_path}"}}',
+                    status_code=400,
+                    media_type="application/json",
+                )
+
+            logger.info(f"【Shuk-光鸭云盘】流式代理请求: path={normalized_path}, name={file_item.name}, size={file_item.size}")
+
+            # 2. 获取签名下载 URL
+            dl_response = self._client.get_download_url(file_item.fileid)
+            if dl_response.get("msg") != "success" and dl_response.get("code") != 0:
+                return Response(
+                    content=f'{{"error": "获取下载链接失败: {dl_response.get("msg", "unknown")}"}}',
+                    status_code=502,
+                    media_type="application/json",
+                )
+            
+            data = dl_response.get("data", {}) or {}
+            download_url = data.get("signedURL") or data.get("downloadUrl")
+            if not download_url:
+                return Response(
+                    content='{"error": "无法获取下载 URL"}',
+                    status_code=502,
+                    media_type="application/json",
+                )
+
+            # 3. 构建转发的请求头（传递 Range 等关键头）
+            forward_headers = {
+                "User-Agent": (
+                    request.headers.get("user-agent", 
+                        "Mozilla/5.0 (compatible; Emby/1.0; GuangyaDiskProxy)")
+                ),
+                "Referer": "https://www.guangyupan.com/",
+            }
+            
+            # 支持 Range 请求（Emby 播放必需）
+            range_header = request.headers.get("range")
+            if range_header:
+                forward_headers["Range"] = range_header
+            
+            # 4. 流式代理
+            req = http_requests.get(
+                download_url,
+                headers=forward_headers,
+                stream=True,
+                timeout=300,
+                allow_redirects=True,
+            )
+            
+            if req.status_code >= 400:
+                error_msg = f"上游返回错误: HTTP {req.status_code}"
+                logger.error(f"【Shuk-光鸭云盘】{error_msg}")
+                return Response(
+                    content=f'{{"error": "{error_msg}"}}',
+                    status_code=req.status_code,
+                    media_type="application/json",
+                )
+
+            # 从上游响应构建响应头
+            response_headers = {}
+            content_type = req.headers.get("content-type", "video/mp4")
+            response_headers["Content-Type"] = content_type
+            
+            content_length = req.headers.get("content-length")
+            if content_length:
+                response_headers["Content-Length"] = content_length
+            
+            # 传递 Content-Range 和 Accept-Ranges（支持 seeking）
+            content_range = req.headers.get("content-range")
+            if content_range:
+                response_headers["Content-Range"] = content_range
+            response_headers["Accept-Ranges"] = "bytes"
+            
+            # 缓存控制
+            response_headers["Cache-Control"] = "public, max-age=3600"
+            response_headers["X-Content-Duration"] = ""  # 让 Emby 自己探测时长
+
+            # 文件名（用于浏览器直接访问时的下载提示）
+            filename = file_item.name
+            response_headers["Content-Disposition"] = f'inline; filename="{filename}"'
+
+            def generate():
+                """流式生成器：从光鸭云盘读取 chunk 并 yield 给客户端"""
+                try:
+                    for chunk in req.iter_content(chunk_size=1024 * 256):  # 256KB chunks
+                        if chunk:
+                            yield chunk
+                except Exception as e:
+                    logger.warning(f"【Shuk-光鸭云盘】流式传输中断: {e}")
+                finally:
+                    req.close()
+
+            status_code = req.status_code if range_header else 200
+            return StreamingResponse(
+                generate(),
+                status_code=status_code,
+                headers=response_headers,
+                media_type=content_type,
+            )
+
+        except FileNotFoundError:
+            return Response(
+                content=f'{{"error": "文件不存在: {normalized_path}"}}',
+                status_code=404,
+                media_type="application/json",
+            )
+        except Exception as err:
+            logger.error(f"【Shuk-光鸭云盘】流式代理失败: {err}")
+            return Response(
+                content=f'{{"error": "{str(err)}"}}',
+                status_code=500,
+                media_type="application/json",
+            )
+
+    def browse_path(self, path: str = "/", recursion: bool = False) -> Dict[str, Any]:
+        """
+        浏览网盘目录结构，返回 JSON 格式的目录树。
+        
+        用法: GET /plugin/shuk-guangyadisk/browse?path=/BMH&recursion=false
+        
+        返回格式:
+        {
+            "path": "/BMH",
+            "name": "BMH", 
+            "items": [
+                {"name": "电影", "type": "dir", "path": "/BMH/电影"},
+                {"name": "xxx.mkv", "type": "file", "size": 1234567890, "path": "/BMH/xxx.mkv"}
+            ],
+            "stream_base": "/plugin/shuk-guangyadisk/stream"
+        }
+        """
+        if not self._enabled or not self._guangya_api:
+            return {"error": "插件未启用或未登录", "items": []}
+
+        try:
+            normalized_path = str(path).replace("\\", "/").strip()
+            if not normalized_path.startswith("/"):
+                normalized_path = f"/{normalized_path}"
+            normalized_path = normalized_path.rstrip("/") or "/"
+
+            root_item = self._guangya_api.get_item(Path(normalized_path))
+            if not root_item:
+                return {"error": f"目录不存在: {normalized_path}", "items": []}
+
+            items = self.list_files(root_item, recursion=bool(recursion))
+            
+            result_items = []
+            for item in (items or []):
+                entry = {
+                    "name": item.name,
+                    "type": item.type,
+                    "path": item.path,
+                    "size": item.size or 0,
+                    "extension": item.extension or "",
+                    "modify_time": item.modify_time or 0,
+                }
+                # 为文件添加 stream URL
+                if item.type == "file":
+                    entry["stream_url"] = f"/plugin/shuk-guangyadisk/stream?path={item.path}"
+                result_items.append(entry)
+
+            return {
+                "path": normalized_path,
+                "name": root_item.name,
+                "type": root_item.type,
+                "items": result_items,
+                "stream_base": "/plugin/shuk-guangyadisk/stream",
+                "browse_base": "/plugin/shuk-guangyadisk/browse",
+                "total_files": len([i for i in result_items if i["type"] == "file"]),
+                "total_dirs": len([i for i in result_items if i["type"] == "dir"]),
+            }
+        except Exception as err:
+            logger.error(f"【Shuk-光鸭云盘】浏览目录失败: {err}")
+            return {"error": str(err), "items": []}
 
     def stop_service(self):
         """

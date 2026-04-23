@@ -1,0 +1,1 @@
+{"id": "shuk-guangyadisk", "name": "Shuk-光鸭云盘", "description": "将光鸭云盘挂载为 MoviePilot / Emby 存储介质，支持扫码登录、文件浏览、上传下载、Emby 媒体库直连。", "version": "2.0.1", "icon": "", "author": "ShukeBta", "author_url": "https://github.com/ShukeBta/Guangyadisk", "level": 1, "labels": "存储,光鸭云盘,网盘,挂载,Emby"}

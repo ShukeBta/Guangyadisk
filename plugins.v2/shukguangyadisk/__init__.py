@@ -28,7 +28,7 @@ class ShukGuangYaDisk(_PluginBase):
     # 插件图标 - 使用内建默认图标
     plugin_icon = "Guangyadisk_A.png"
     # 插件版本
-    plugin_version = "2.2.1"
+    plugin_version = "2.2.2"
     # 插件作者
     plugin_author = "ShukeBta"
     # 作者主页
@@ -285,7 +285,7 @@ class ShukGuangYaDisk(_PluginBase):
         """
         Vue 模式下返回空表单与初始配置。
         """
-        return [], {
+        return None, {
             "enabled": False,
             "access_token": "",
             "refresh_token": "",

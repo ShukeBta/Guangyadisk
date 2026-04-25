@@ -479,13 +479,10 @@ class GuangyaWebDAVProvider:
         if not parent_item:
             return Response(status_code=409, content="Parent not found")
 
-        # 将上传内容写入临时文件
-        body = request.body
+        # 将上传内容写入临时文件（同步环境下从 _body 缓存读取）
+        body = getattr(request, '_body', None) or b""
         if not body:
-            # 对于大文件可能需要流式读取
-            body = b"".join([chunk async for chunk in request.body_iterator]) if hasattr(request, 'body_iterator') else b""
-            if not body:
-                return Response(status_code=400, content="Empty body")
+            return Response(status_code=400, content="Empty body")
 
         with tempfile.NamedTemporaryFile(suffix=f"_{file_name}", delete=False, mode="wb") as tmp:
             tmp.write(body)

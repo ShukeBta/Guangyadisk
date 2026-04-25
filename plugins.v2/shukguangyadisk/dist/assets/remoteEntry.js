@@ -62,7 +62,7 @@ const currentImports = {};
 "./Page":()=>{
       dynamicLoadingCss(["Page-76c96a1e.css"], false, './Page');
       return __federation_import('./__federation_expose_Page-3595592a.js').then(module =>Object.keys(module).every(item => exportSet.has(item)) ? () => module.default : () => module)},
-"./Config":(){
+"./Config":()=>{
       dynamicLoadingCss(["Config-24f22a04.css"], false, './Config');
       return __federation_import('./__federation_expose_Config-dd5dc9d2.js').then(module =>Object.keys(module).every(item => exportSet.has(item)) ? () => module.default : () => module)},};
       const seen = {};

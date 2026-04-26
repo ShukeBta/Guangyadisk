@@ -6,6 +6,7 @@
   "author": "ShukeBta",
   "level": 1,
   "history": {
+    "v2.2.3": "重新从KoWming源码构建前端，修复CSS注入问题导致Vue组件无法加载，插件点击后自动关闭的问题",
     "v2.2.2": "修复 get_form 返回 None 以正确触发 Vue 渲染模式；修复 index.html CSS 引用；修复 ZIP 目录名",
     "v2.2.1": "修复 webdav_provider.py async for 语法错误、init_plugin 首次安装不初始化、get_form 返回值不合规",
     "v2.2.0": "新增 WebDAV 服务端，Emby/Jellyfin 可通过 WebDAV 挂载网盘为媒体库",
@@ -13,7 +14,6 @@
     "v2.0.3": "修复前端加载",
     "v2.0.2": "修复插件不显示",
     "v2.0.1": "兼容性修复",
-    "v2.0.0": "初始版本",
-    "v2.2.3": "重新从KoWming源码构建前端，修复CSS注入问题导致Vue组件无法加载，插件点击后自动关闭的问题"
+    "v2.0.0": "初始版本"
   }
 }

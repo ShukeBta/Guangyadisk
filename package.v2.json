@@ -8,6 +8,7 @@
     "author": "ShukeBta",
     "level": 1,
     "history": {
+      "v2.2.3": "重新从KoWming源码构建前端，修复CSS注入问题导致Vue组件无法加载，插件点击后自动关闭的问题",
       "v2.2.2": "修复 get_form 返回 None（而非 []）以正确触发 Vue 渲染模式；修复 index.html 中错误的 CSS 文件引用；修复 ZIP 包目录名（去除连字符）",
       "v2.2.1": "修复 webdav_provider.py 中 async for 语法错误导致插件无法加载；修复 init_plugin 首次安装时不初始化存储的问题；修复 get_form 返回值不合规导致插件无效",
       "v2.2.0": "新增 WebDAV 服务端（/webdav 端点）：支持 PROPFIND/GET/HEAD/MKCOL/DELETE 等 WebDAV 协议方法，Emby/Jellyfin 可通过 WebDAV 直接挂载光鸭云盘为媒体库，无需下载到本地即可扫描播放",
@@ -15,8 +16,7 @@
       "v2.0.3": "修复 remoteEntry.js CSS 引用路径错误导致前端加载失败（恢复原始 CSS 文件引用）、使用原始 GuangyaDisk 图标",
       "v2.0.2": "修复插件不显示在'我的插件'列表中（添加 plugin.json、统一 icon 字段为 PNG 图标）",
       "v2.0.1": "修复 package.v2.json 兼容格式、二维码过期无法刷新、添加仓库级 README 和 MIT License",
-      "v2.0.0": "MoviePilot V2 版本 Shuk-光鸭云盘插件，支持扫码登录、文件管理、存储挂载",
-      "v2.2.3": "重新从KoWming源码构建前端，修复CSS注入问题导致Vue组件无法加载，插件点击后自动关闭的问题"
+      "v2.0.0": "MoviePilot V2 版本 Shuk-光鸭云盘插件，支持扫码登录、文件管理、存储挂载"
     }
   }
 }
